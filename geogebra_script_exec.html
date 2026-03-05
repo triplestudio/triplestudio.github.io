@@ -1,0 +1,1572 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GeoGebra 几何绘制工具</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background: #f5f5f5;
+        }
+
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            flex-shrink: 0;
+        }
+
+        h1 {
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .header-buttons {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .header-buttons button {
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .header-buttons button:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-1px);
+        }
+
+        .header-buttons button.active {
+            background: rgba(255,255,255,0.4);
+            font-weight: bold;
+        }
+
+        .header-buttons select {
+            background: white;
+            border: 1px solid rgba(255,255,255,0.5);
+            color: #333;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            outline: none;
+            font-weight: 500;
+        }
+
+        .header-buttons select:hover {
+            background: #f8f8f8;
+        }
+
+        .header-buttons select option {
+            background: white;
+            color: #333;
+        }
+
+        .container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+            min-height: 0;
+        }
+
+        .left-panel {
+            width: 350px;
+            min-width: 350px;
+            display: flex;
+            flex-direction: column;
+            background: white;
+            border-right: 2px solid #e0e0e0;
+            min-width: 0;
+        }
+
+        .editor-header {
+            padding: 12px 15px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .editor-header h2 {
+            font-size: 14px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .editor-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 0;
+            min-height: 0;
+        }
+
+        .code-editor {
+            flex: 1;
+            width: 100%;
+            padding: 15px;
+            border: none;
+            resize: none;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            background: #fafafa;
+            color: #333;
+            outline: none;
+            min-height: 0;
+        }
+
+        .code-editor:focus {
+            background: #fff;
+        }
+
+        .editor-footer {
+            padding: 12px 15px;
+            background: #f8f9fa;
+            border-top: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+
+        .execute-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .execute-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .clear-btn {
+            background: #f44336;
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .clear-btn:hover {
+            background: #d32f2f;
+            transform: translateY(-1px);
+        }
+
+        .help-btn {
+            background: #4caf50;
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .help-btn:hover {
+            background: #388e3c;
+            transform: translateY(-1px);
+        }
+
+        .right-panel {
+            flex: 1;
+            background: white;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+
+        .geogebra-header {
+            padding: 8px 12px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            min-height: 32px;
+            flex-shrink: 0;
+        }
+
+        .geogebra-header h2 {
+            font-size: 13px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .status {
+            font-size: 11px;
+            color: #666;
+            padding: 2px 6px;
+            background: #e3f2fd;
+            border-radius: 3px;
+        }
+
+        .geogebra-container {
+            flex: 1;
+            width: 100%;
+            background: white;
+            overflow: hidden;
+            position: relative;
+            min-height: 0;
+        }
+
+        #ggb-element {
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #f5f5f5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #e0e0e0;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            color: #666;
+            font-size: 14px;
+        }
+
+        /* 设置面板样式 */
+        .settings-panel {
+            position: fixed;
+            top: 0;
+            right: -400px;
+            width: 380px;
+            height: 100%;
+            background: white;
+            box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            transition: right 0.3s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .settings-panel.open {
+            right: 0;
+        }
+
+        .settings-header {
+            padding: 15px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .settings-header h3 {
+            font-size: 16px;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .close-settings {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 0;
+            line-height: 1;
+        }
+
+        .settings-content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .settings-group {
+            margin-bottom: 25px;
+        }
+
+        .settings-group h4 {
+            font-size: 14px;
+            color: #333;
+            margin-bottom: 12px;
+            font-weight: 600;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 5px;
+        }
+
+        .setting-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .setting-item label {
+            font-size: 13px;
+            color: #666;
+        }
+
+        .setting-item input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .settings-footer {
+            padding: 15px 20px;
+            background: #f8f9fa;
+            border-top: 1px solid #e0e0e0;
+            display: flex;
+            gap: 10px;
+        }
+
+        .settings-footer button {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-secondary {
+            background: #e0e0e0;
+            color: #666;
+        }
+
+        .btn-secondary:hover {
+            background: #d0d0d0;
+        }
+
+        .btn-danger {
+            background: #ef5350;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #e53935;
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+            display: none;
+        }
+
+        .overlay.active {
+            display: block;
+        }
+
+        .output-log {
+            height: 100px;
+            background: #1e1e1e;
+            color: #00ff00;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 11px;
+            padding: 8px 12px;
+            overflow-y: auto;
+            border-top: 2px solid #333;
+            flex-shrink: 0;
+        }
+
+        .log-entry {
+            margin: 4px 0;
+            padding: 2px 0;
+        }
+
+        .log-success {
+            color: #00ff00;
+        }
+
+        .log-error {
+            color: #ff4444;
+        }
+
+        .log-info {
+            color: #4fc3f7;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+
+            .left-panel,
+            .right-panel {
+                width: 100%;
+                height: 50%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>📐 GeoGebra 几何绘制工具</h1>
+        <div class="header-buttons">
+            <select id="app-mode-select" onchange="switchMode()">
+                <option value="geometry">2D 几何</option>
+                <option value="3d" selected>3D 图形</option>
+                <option value="graphing">函数绘图</option>
+                <option value="classic">经典版</option>
+            </select>
+            <button onclick="toggleSettings()">⚙️ 设置</button>
+            <button onclick="loadExample()">加载示例</button>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="left-panel">
+            <div class="editor-header">
+                <h2>📝 命令编辑器 <span id="mode-badge" style="font-size: 11px; color: #667eea; background: rgba(102, 126, 234, 0.1); padding: 2px 8px; border-radius: 4px;">2D 几何</span></h2>
+                <span style="font-size: 12px; color: #666;">支持 GeoGebra 命令语法</span>
+            </div>
+            <div class="editor-container">
+                <textarea id="code-editor" class="code-editor" placeholder="在此输入 GeoGebra 命令，每行一个命令...
+
+示例命令：
+A = (0, 0)
+B = (4, 0)
+C = (0, 3)
+tri = Polygon[A, B, C]
+circ = Circle[(0,0), 3]"></textarea>
+            </div>
+            <div class="editor-footer">
+                <div style="display: flex; gap: 8px;">
+                    <button class="clear-btn" onclick="clearCanvas()">清空画布</button>
+                    <button class="help-btn" onclick="showHelp()">命令帮助</button>
+                </div>
+                <button class="execute-btn" onclick="executeCommands()">
+                    <span>▶</span> 执行命令
+                </button>
+            </div>
+        </div>
+
+        <div class="right-panel">
+            <div class="geogebra-header">
+                <h2>📊 几何画布</h2>
+                <div class="status" id="status-text">正在加载...</div>
+            </div>
+            <div class="geogebra-container">
+                <div class="loading-overlay" id="loading-overlay">
+                    <div class="loading-spinner"></div>
+                    <div class="loading-text">正在加载 GeoGebra 组件...</div>
+                </div>
+                <div id="ggb-element"></div>
+            </div>
+            <div class="output-log" id="output-log">
+                <div class="log-entry log-info">欢迎使用 GeoGebra 几何绘制工具</div>
+                <div class="log-entry log-info">正在初始化 GeoGebra 组件...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 设置面板 -->
+    <div class="overlay" id="settings-overlay" onclick="toggleSettings()"></div>
+    <div class="settings-panel" id="settings-panel">
+        <div class="settings-header">
+            <h3>⚙️ 功能设置</h3>
+            <button class="close-settings" onclick="toggleSettings()">&times;</button>
+        </div>
+        <div class="settings-content">
+            <div class="settings-group">
+                <h4>3D 专用设置</h4>
+                <div class="setting-item">
+                    <label>隐藏 3D 基平面（坐标系）</label>
+                    <input type="checkbox" id="setting-plane">
+                </div>
+                <div class="setting-item">
+                    <label>隐藏坐标轴</label>
+                    <input type="checkbox" id="setting-axes">
+                </div>
+                <div class="setting-item">
+                    <label>显示网格</label>
+                    <input type="checkbox" id="setting-grid" checked>
+                </div>
+            </div>
+
+            <div class="settings-group">
+                <h4>显示设置</h4>
+                <div class="setting-item">
+                    <label>显示标签</label>
+                    <input type="checkbox" id="setting-labels" checked>
+                </div>
+                <div class="setting-item">
+                    <label>显示代数视图</label>
+                    <input type="checkbox" id="setting-algebra" checked disabled title="此选项由工具栏控制">
+                </div>
+                <div class="setting-item">
+                    <label>显示工具栏</label>
+                    <input type="checkbox" id="setting-toolbar" checked disabled title="此选项固定为显示">
+                </div>
+            </div>
+
+            <div class="settings-group">
+                <h4>交互设置</h4>
+                <div class="setting-item">
+                    <label>启用平移（拖动画布）</label>
+                    <input type="checkbox" checked disabled title="默认已启用">
+                </div>
+                <div class="setting-item">
+                    <label>启用缩放（滚轮）</label>
+                    <input type="checkbox" checked disabled title="默认已启用">
+                </div>
+                <div class="setting-item">
+                    <label>启用旋转（3D模式）</label>
+                    <input type="checkbox" checked disabled title="默认已启用">
+                </div>
+            </div>
+
+            <div class="settings-group">
+                <h4>操作提示</h4>
+                <div style="font-size: 12px; color: #666; line-height: 1.6;">
+                    <p>🖱️ <strong>平移视图：</strong>按住 Shift + 拖动鼠标</p>
+                    <p>🔍 <strong>缩放视图：</strong>滚动鼠标滚轮</p>
+                    <p>🔄 <strong>3D 旋转：</strong>直接拖动鼠标（仅 3D 模式）</p>
+                    <p>📐 <strong>绘制图形：</strong>在左侧编辑器输入命令后点击"执行命令"</p>
+                </div>
+            </div>
+        </div>
+        <div class="settings-footer">
+            <button class="btn-secondary" onclick="resetView()">重置视图</button>
+            <button class="btn-danger" onclick="clearAll()">清除所有</button>
+            <button class="btn-primary" onclick="applySettings()">应用设置</button>
+        </div>
+    </div>
+
+    <!-- GeoGebra CDN - 多个源确保加载成功 -->
+    <script>
+        // 配置多个 CDN 源，按优先级尝试
+        // CDN 源默认为 5.x 版本
+        const CDN_SOURCES = [
+            'https://cdn.geogebra.org/apps/deployggb.js',
+            'https://www.geogebra.org/apps/deployggb.js',
+            'https://static.geogebra.org/apps/deployggb.js'
+        ];
+
+        let currentCdnIndex = 0;
+        let scriptLoadTimeout = null;
+
+        function loadGeoGebraScript() {
+            const script = document.createElement('script');
+            script.src = CDN_SOURCES[currentCdnIndex];
+            script.id = 'geogebra-deploy-script';
+
+            script.onload = function() {
+                console.log('GeoGebra 库加载成功:', CDN_SOURCES[currentCdnIndex]);
+                clearTimeout(scriptLoadTimeout);
+                addLog('GeoGebra 库加载成功', 'success');
+                initGeoGebra();
+            };
+
+            script.onerror = function() {
+                console.warn('GeoGebra CDN 加载失败:', CDN_SOURCES[currentCdnIndex]);
+                currentCdnIndex++;
+
+                if (currentCdnIndex < CDN_SOURCES.length) {
+                    addLog(`尝试第 ${currentCdnIndex + 1} 个 CDN 源...`, 'info');
+                    loadGeoGebraScript();
+                } else {
+                    addLog('所有 GeoGebra CDN 源均加载失败，请检查网络连接', 'error');
+                    updateStatus('加载失败');
+                    hideLoadingOverlay();
+                }
+            };
+
+            // 设置超时
+            scriptLoadTimeout = setTimeout(() => {
+                if (!window.GGBApplet) {
+                    console.warn('GeoGebra CDN 加载超时:', CDN_SOURCES[currentCdnIndex]);
+                    script.onerror();
+                }
+            }, 15000);
+
+            // 移除旧脚本
+            const oldScript = document.getElementById('geogebra-deploy-script');
+            if (oldScript) {
+                oldScript.remove();
+            }
+
+            document.head.appendChild(script);
+        }
+    </script>
+
+    <script>
+        let ggbApplet = null;
+        let ggbApi = null;
+        let isGeoGebraReady = false;
+        let currentMode = 'geometry';
+
+        // 隐藏加载遮罩
+        function hideLoadingOverlay() {
+            const overlay = document.getElementById('loading-overlay');
+            if (overlay) {
+                overlay.style.display = 'none';
+            }
+        }
+
+        // 显示加载遮罩
+        function showLoadingOverlay() {
+            const overlay = document.getElementById('loading-overlay');
+            if (overlay) {
+                overlay.style.display = 'flex';
+            }
+        }
+
+        // 初始化 GeoGebra
+        function initGeoGebra() {
+            updateStatus('正在初始化...');
+            addLog('开始初始化 GeoGebra 组件...', 'info');
+
+            const container = document.getElementById('ggb-element');
+            if (!container) {
+                addLog('找不到 ggb-element 容器', 'error');
+                updateStatus('初始化失败');
+                hideLoadingOverlay();
+                return;
+            }
+
+            const containerWidth = container.parentElement.offsetWidth;
+            const containerHeight = container.parentElement.offsetHeight;
+
+            console.log('容器尺寸:', containerWidth, 'x', containerHeight);
+            addLog(`容器尺寸: ${containerWidth} x ${containerHeight}`, 'info');
+
+        // 基本参数配置 - 使用最小化配置确保稳定性
+            var currentMode = document.getElementById('app-mode-select').value;
+            var appName = currentMode === '3d' ? '3d' : currentMode;
+
+            var params = {
+                "appName": appName,
+                "width": containerWidth,
+                "height": containerHeight,
+                "showToolBar": true,
+                "showAlgebraInput": true,
+                "showMenuBar": false,
+                "enableShiftDragZoom": true,
+                "enableRightClick": true,
+                "showToolBarHelp": false,
+                "errorDialogsActive": true,
+                "allowUpscale": true,
+                "showResetIcon": true,
+                "enableLabelDrags": true,
+                "capturingThreshold": null,
+                "enableFileFeatures": false,
+                "enableCAS": false,
+                "id": "ggbAppletInstance",
+                "borderWidth": 0,
+                "useBrowserForJS": true,
+                "algebraInputPosition": "bottom",
+                "scale": 1,
+                "scaleContainerClass": false,
+                "showCoordinates": true,
+                "allowRescale": true,
+                "appletOnLoad": function(api) {
+                    console.log('GeoGebra Applet 加载完成回调');
+                    ggbApi = api;
+                    isGeoGebraReady = true;
+                    hideLoadingOverlay();
+                    updateStatus('GeoGebra 已加载，可以执行命令');
+                    addLog('GeoGebra 组件已完全加载 (' + appName + ' 模式)', 'success');
+                }
+            };
+
+            try {
+                // 检查 GGBApplet 是否可用
+                if (typeof GGBApplet === 'undefined') {
+                    throw new Error('GeoGebra 库未加载');
+                }
+
+                ggbApplet = new GGBApplet(params, true);
+
+                // 注入 applet
+                const injectResult = ggbApplet.inject('ggb-element');
+                console.log('注入结果:', injectResult);
+
+                // 记录初始尺寸用于自适应调整
+                setTimeout(function() {
+                    recordInitialSize();
+                }, 100);
+
+                // 启动备用检查机制（以防回调不触发）
+                startApiCheck();
+
+            } catch (e) {
+                console.error('初始化错误:', e);
+                addLog('初始化错误: ' + e.message, 'error');
+                updateStatus('初始化失败');
+                hideLoadingOverlay();
+            }
+        }
+
+        // 切换模式
+        function switchMode() {
+            const select = document.getElementById('app-mode-select');
+            const newMode = select.value;
+
+            if (newMode === currentMode) {
+                return; // 模式未改变
+            }
+
+            currentMode = newMode;
+            console.log('切换到模式:', currentMode);
+            addLog(`切换到 ${getModeName(currentMode)} 模式`, 'info');
+
+            // 更新模式标识
+            const modeBadge = document.getElementById('mode-badge');
+            if (modeBadge) {
+                modeBadge.textContent = getModeName(currentMode);
+            }
+
+            // 清理旧的 applet
+            if (ggbApplet) {
+                try {
+                    const container = document.getElementById('ggb-element');
+                    container.innerHTML = '';
+                } catch (e) {
+                    console.log('清理时出错:', e);
+                }
+            }
+
+            // 重置状态
+            isGeoGebraReady = false;
+            ggbApi = null;
+            ggbApplet = null;
+
+            // 显示加载遮罩
+            showLoadingOverlay();
+
+            // 重新初始化
+            setTimeout(() => {
+                initGeoGebra();
+            }, 500);
+        }
+
+        // 获取模式名称
+        function getModeName(mode) {
+            const names = {
+                'geometry': '2D 几何',
+                '3d': '3D 图形',
+                'graphing': '函数绘图',
+                'classic': '经典版'
+            };
+            return names[mode] || mode;
+        }
+        function startApiCheck() {
+            let checkCount = 0;
+            const maxChecks = 60; // 60 * 500ms = 30秒
+
+            const checkInterval = setInterval(() => {
+                checkCount++;
+                console.log(`检查 API (${checkCount}/${maxChecks})...`);
+
+                try {
+                    // 方法1: 通过 isLoaded 检查
+                    if (ggbApplet.isLoaded && ggbApplet.isLoaded()) {
+                        console.log('通过 isLoaded 确认加载完成');
+                        onGeoGebraReady();
+                        return;
+                    }
+
+                    // 方法2: 尝试获取 API 对象
+                    ggbApi = ggbApplet.getAppletObject();
+                    if (ggbApi) {
+                        // 测试 API 是否可用
+                        if (ggbApi.evalCommand) {
+                            console.log('API 对象获取成功');
+                            onGeoGebraReady();
+                            return;
+                        }
+                    }
+                } catch (e) {
+                    console.log('检查时出错:', e);
+                }
+
+                // 超时处理
+                if (checkCount >= maxChecks) {
+                    clearInterval(checkInterval);
+                    console.warn('API 检查超时');
+                    addLog('GeoGebra 组件已加载，但 API 可能受限', 'info');
+                    updateStatus('已加载（API限制）');
+                    hideLoadingOverlay();
+                    isGeoGebraReady = true; // 标记为可用，虽然 API 可能受限
+                }
+
+            }, 500);
+        }
+
+        // GeoGebra 准备就绪
+        function onGeoGebraReady() {
+            if (isGeoGebraReady) return; // 避免重复调用
+
+            try {
+                ggbApi = ggbApplet.getAppletObject();
+                isGeoGebraReady = true;
+                hideLoadingOverlay();
+
+                updateStatus('GeoGebra 已加载，可以执行命令');
+                addLog('GeoGebra 组件已完全加载', 'success');
+                console.log('GeoGebra 已就绪, API:', ggbApi);
+
+                // 测试 API
+                if (ggbApi && ggbApi.evalCommand) {
+                    console.log('API 测试通过');
+                }
+
+                // 获取并显示版本信息
+                displayVersionInfo();
+            } catch (e) {
+                console.error('准备就绪时出错:', e);
+                addLog('组件已加载，但可能存在 API 限制', 'info');
+                updateStatus('已加载');
+                hideLoadingOverlay();
+                isGeoGebraReady = true;
+            }
+        }
+
+        // 显示版本信息
+        function displayVersionInfo() {
+            const mode = document.getElementById('app-mode-select').value;
+            let versionInfo = [];
+
+            versionInfo.push('='.repeat(40));
+            versionInfo.push('📦 GeoGebra 组件信息');
+            versionInfo.push('='.repeat(40));
+
+            // 显示当前模式
+            versionInfo.push(`🔧 应用模式: ${getModeName(mode)}`);
+
+            // 获取版本信息
+            let versionText = '';
+            try {
+                if (ggbApi) {
+                    // 尝试获取各种版本信息
+                    if (ggbApi.getVersion) {
+                        const ver = ggbApi.getVersion();
+                        versionInfo.push(`📌 GeoGebra 版本: ${ver} (锁定: 5.x)`);
+                        versionText = ` (v${ver} - 5.x版)`;
+                    }
+
+                    if (ggbApi.getKernel) {
+                        try {
+                            const kernel = ggbApi.getKernel();
+                            if (kernel && kernel.getApplication) {
+                                const app = kernel.getApplication();
+                                if (app && app.getVersion) {
+                                    versionInfo.push(`🎯 内核版本: ${app.getVersion()}`);
+                                }
+                            }
+                        } catch (e) {
+                            console.log('获取内核版本失败:', e);
+                        }
+                    }
+
+                    // 显示容器尺寸
+                    const container = document.getElementById('ggb-element');
+                    if (container) {
+                        versionInfo.push(`📐 画布尺寸: ${container.offsetWidth} × ${container.offsetHeight} px`);
+                    }
+
+                    // 显示 API 可用性
+                    const apiMethods = [];
+                    if (ggbApi.evalCommand) apiMethods.push('evalCommand');
+                    if (ggbApi.setCoordSystem) apiMethods.push('setCoordSystem');
+                    if (ggbApi.reset) apiMethods.push('reset');
+                    if (ggbApi.newConstruction) apiMethods.push('newConstruction');
+                    if (ggbApi.getXML) apiMethods.push('getXML');
+                    if (ggbApi.setXML) apiMethods.push('setXML');
+
+                    versionInfo.push(`🔌 可用 API 方法: ${apiMethods.length} 个 (${apiMethods.slice(0, 3).join(', ')}${apiMethods.length > 3 ? '...' : ''})`);
+                }
+            } catch (e) {
+                console.log('获取版本信息时出错:', e);
+                versionInfo.push('⚠️ 无法获取详细版本信息');
+            }
+
+            versionInfo.push('='.repeat(40));
+            versionInfo.push('');
+
+            // 输出到日志
+            versionInfo.forEach(line => {
+                addLog(line, 'info');
+            });
+
+            // 同时在控制台输出
+            console.log(versionInfo.join('\n'));
+
+            // 更新页面标题，显示版本号
+            if (versionText) {
+                document.title = `GeoGebra 几何绘制工具${versionText}`;
+            }
+        }
+
+        // 执行命令
+        function executeCommands() {
+            if (!isGeoGebraReady) {
+                addLog('GeoGebra 尚未完全加载，请稍候...', 'error');
+                updateStatus('等待加载...');
+                return;
+            }
+
+            if (!ggbApi || !ggbApi.evalCommand) {
+                addLog('无法执行命令：API 不可用', 'error');
+                addLog('请尝试直接在右侧 GeoGebra 组件中手动输入命令', 'info');
+                return;
+            }
+
+            const editor = document.getElementById('code-editor');
+            const commands = editor.value.split('\n').filter(cmd => cmd.trim() !== '');
+
+            if (commands.length === 0) {
+                addLog('请输入命令', 'error');
+                return;
+            }
+
+            updateStatus('正在执行...');
+            addLog('开始执行命令...', 'info');
+
+            let successCount = 0;
+            let errorCount = 0;
+
+            commands.forEach((cmd, index) => {
+                const trimmedCmd = cmd.trim();
+                if (!trimmedCmd || trimmedCmd.startsWith('//')) return;
+
+                // 跳过空行和纯注释
+                if (trimmedCmd === '') return;
+
+                try {
+                    const result = ggbApi.evalCommand(trimmedCmd);
+                    
+                    // 检查命令是否执行成功
+                    if (result) {
+                        successCount++;
+                        addLog(`✓ 行 ${index + 1}: ${trimmedCmd}`, 'success');
+                    } else {
+                        // 检查是否是样式设置命令（这些命令可能返回false但实际成功）
+                        const isStyleCommand = trimmedCmd.startsWith('SetColor') || 
+                                              trimmedCmd.startsWith('SetPointSize') ||
+                                              trimmedCmd.startsWith('SetLineThickness') ||
+                                              trimmedCmd.startsWith('SetVisible') ||
+                                              trimmedCmd.startsWith('SetLabelVisible');
+                        
+                        if (isStyleCommand) {
+                            // 样式命令不做严格检查，认为成功
+                            successCount++;
+                            addLog(`✓ 行 ${index + 1}: ${trimmedCmd}`, 'success');
+                        } else {
+                            errorCount++;
+                            addLog(`✗ 行 ${index + 1}: ${trimmedCmd} (命令执行失败)`, 'error');
+                        }
+                    }
+                } catch (e) {
+                    errorCount++;
+                    addLog(`✗ 行 ${index + 1}: ${trimmedCmd} - ${e.message || '未知错误'}`, 'error');
+                }
+            });
+
+            updateStatus(`执行完成: ${successCount} 成功, ${errorCount} 失败`);
+        }
+
+        // 清空画布
+        function clearCanvas() {
+            if (!isGeoGebraReady || !ggbApi) {
+                addLog('GeoGebra 尚未完全加载', 'error');
+                return;
+            }
+            try {
+                // 方法1: 使用 newConstruction 创建新的构造（最彻底）
+                if (ggbApi.newConstruction) {
+                    ggbApi.newConstruction();
+                    addLog('画布已清空', 'info');
+                    updateStatus('画布已清空');
+                } 
+                // 方法2: 使用 evalCommand 执行删除所有对象的命令
+                else if (ggbApi.evalCommand) {
+                    // 删除所有对象（通过重新初始化）
+                    ggbApi.evalCommand('DeleteAll[]');
+                    addLog('画布已清空', 'info');
+                    updateStatus('画布已清空');
+                }
+                // 方法3: 使用 reset（可能只清空代数区）
+                else if (ggbApi.reset) {
+                    ggbApi.reset();
+                    addLog('画布已重置', 'info');
+                    updateStatus('画布已重置');
+                }
+                else {
+                    addLog('清空功能不可用', 'error');
+                }
+            } catch (e) {
+                addLog('清空画布失败: ' + e.message, 'error');
+            }
+        }
+
+        // 添加日志
+        function addLog(message, type = 'info') {
+            const log = document.getElementById('output-log');
+            const entry = document.createElement('div');
+            entry.className = `log-entry log-${type}`;
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            log.appendChild(entry);
+            log.scrollTop = log.scrollHeight;
+        }
+
+        // 更新状态
+        function updateStatus(text) {
+            const statusEl = document.getElementById('status-text');
+            if (statusEl) {
+                statusEl.textContent = text;
+            }
+        }
+
+        // 加载示例
+        function loadExample() {
+            const mode = document.getElementById('app-mode-select').value;
+            let example = '';
+
+            if (mode === '3d') {
+                // 3D 模式示例 - 仅使用5.0支持的命令
+                example = `// 3D 立体图形示例（GeoGebra 5.0支持）
+// 创建立方体的8个顶点
+A = (0, 0, 0)
+B = (3, 0, 0)
+C = (3, 3, 0)
+D = (0, 3, 0)
+E = (0, 0, 3)
+F = (3, 0, 3)
+G = (3, 3, 3)
+H = (0, 3, 3)
+
+// 创建线段连接顶点
+s1 = Segment[A, B]
+s2 = Segment[B, C]
+s3 = Segment[C, D]
+s4 = Segment[D, A]
+s5 = Segment[E, F]
+s6 = Segment[F, G]
+s7 = Segment[G, H]
+s8 = Segment[H, E]
+s9 = Segment[A, E]
+s10 = Segment[B, F]
+s11 = Segment[C, G]
+s12 = Segment[D, H]
+
+// 设置线条颜色
+SetColor[s1, "blue"]
+SetColor[s2, "blue"]
+SetColor[s3, "blue"]
+SetColor[s4, "blue"]
+SetColor[s5, "blue"]
+SetColor[s6, "blue"]
+SetColor[s7, "blue"]
+SetColor[s8, "blue"]
+SetColor[s9, "blue"]
+SetColor[s10, "blue"]
+SetColor[s11, "blue"]
+SetColor[s12, "blue"]
+
+// 创建球体
+sphereObj = Sphere[(0, 0, 0), 1.5]
+SetColor[sphereObj, "red"]
+
+// 创建圆柱
+cyl = Cylinder[(4, 0, 0), (4, 0, 3), 1]
+SetColor[cyl, "green"]
+
+// 创建平面
+plane1 = Plane[A, B, E]
+SetColor[plane1, "yellow"]`;
+            } else if (mode === 'graphing') {
+                // 函数绘图模式示例 - 仅使用5.0支持的命令
+                example = `// 函数绘图示例（GeoGebra 5.0支持）
+// 定义函数
+f(x) = sin(x)
+g(x) = cos(x)
+h(x) = x^2 / 2
+
+// 设置颜色
+SetColor[f, "blue"]
+SetColor[g, "red"]
+SetColor[h, "green"]
+
+// 添加点
+P = (1, sin(1))
+Q = (2, cos(2))
+R = (1, 0.5)
+
+// 设置点样式
+SetPointSize[P, 5]
+SetPointSize[Q, 5]
+SetPointSize[R, 5]
+SetColor[P, "blue"]
+SetColor[Q, "red"]
+SetColor[R, "green"]`;
+            } else if (mode === 'classic') {
+                // 经典模式示例 - 仅使用5.0支持的命令
+                example = `// 经典模式示例（GeoGebra 5.0支持）
+// 创建点
+A = (0, 0)
+B = (4, 0)
+C = (2, 3)
+
+// 创建三角形（使用 Polygon）
+triObj = Polygon[A, B, C]
+
+// 设置颜色
+SetColor[triObj, "purple"]
+
+// 添加中点
+M = Midpoint[A, B]
+N = Midpoint[B, C]
+O = Midpoint[C, A]
+
+// 创建线段连接中点
+mn = Segment[M, N]
+no = Segment[N, O]
+om = Segment[O, M]
+SetColor[mn, "orange"]
+SetColor[no, "orange"]
+SetColor[om, "orange"]
+
+// 创建中点三角形（使用 Polygon）
+midTriangle = Polygon[M, N, O]
+SetColor[midTriangle, "green"]
+
+// 创建圆
+circ = Circle[A, 2]
+SetColor[circ, "blue"]
+
+// 计算角度
+ang1 = Angle[C, A, B]
+ang2 = Angle[A, B, C]
+ang3 = Angle[B, C, A]
+
+// 创建角平分线
+bis1 = AngleBisector[C, A, B]
+bis2 = AngleBisector[A, B, C]
+bis3 = AngleBisector[B, C, A]
+SetColor[bis1, "red"]
+SetColor[bis2, "red"]
+SetColor[bis3, "red"]`;
+            } else {
+                // 2D 几何模式示例 - 仅使用5.0支持的命令
+                example = `// 2D 几何示例（GeoGebra 5.0支持）
+// 创建三角形顶点
+A = (0, 0)
+B = (4, 0)
+C = (0, 3)
+
+// 创建三角形（使用 Polygon）
+tri = Polygon[A, B, C]
+
+// 设置颜色
+SetColor[tri, "blue"]
+
+// 创建圆
+circ = Circle[(2, 1.5), 2]
+SetColor[circ, "red"]
+
+// 添加中点
+M = Midpoint[A, B]
+N = Midpoint[B, C]
+O = Midpoint[C, A]
+
+// 创建线段连接中点
+mn = Segment[M, N]
+no = Segment[N, O]
+om = Segment[O, M]
+SetColor[mn, "green"]
+SetColor[no, "green"]
+SetColor[om, "green"]
+
+// 计算面积
+area = Area[tri]`;
+            }
+
+            document.getElementById('code-editor').value = example;
+            addLog('示例代码已加载', 'info');
+            updateStatus('示例已加载');
+        }
+
+        // 显示帮助
+        function showHelp() {
+            const mode = document.getElementById('app-mode-select').value;
+            let helpText = '';
+
+            if (mode === '3d') {
+                helpText = `3D 模式常用命令帮助:
+
+3D 基本图形:
+- Point[(x, y, z)] - 创建3D点
+- Sphere[(x, y, z), r] - 创建球体
+- Cube[(x, y, z), s] - 创建立方体
+- Cone[圆, 顶点] - 创建圆锥
+- Cylinder[圆1, 圆2] - 创建圆柱
+- Pyramid[底面多边形, 顶点] - 创建棱锥
+
+3D 操作:
+- Rotate[对象, 角度, 直线] - 绕直线旋转
+- Translate[对象, 向量] - 平移对象
+- Intersect[对象1, 对象2] - 3D交点
+- Plane[点, 法向量] - 创建平面
+
+3D 样式:
+- SetFilling[对象, 透明度] - 设置填充透明度
+- SetPointSize[点, 大小] - 设置点的大小
+
+提示:
+- 3D 坐标使用 (x, y, z) 格式
+- 可以用鼠标拖动旋转3D视图
+- 滚轮可以缩放视图
+- 点击右上角"设置"按钮可以隐藏基平面，实现纯图形展示`;
+            } else if (mode === 'graphing') {
+                helpText = `函数绘图模式常用命令帮助:
+
+函数定义:
+- f(x) = expression - 定义函数
+- 例如: f(x) = sin(x) + cos(x)
+- g(x) = x^2 - 2x + 1
+
+函数操作:
+- Derivative[f] - 求导数
+- Integral[f, a, b] - 定积分
+- Root[f] - 求零点
+- Extremum[f] - 求极值
+- Tangent[f, x0] - 切线
+
+特殊函数:
+- sin(x), cos(x), tan(x) - 三角函数
+- exp(x), ln(x), log(x) - 指数和对数
+- sqrt(x), abs(x) - 平方根和绝对值
+- If[条件, 值1, 值2] - 条件函数
+
+绘图设置:
+- SetLineThickness[函数, 宽度] - 线宽
+- SetColor[函数, 颜色] - 颜色
+
+提示:
+- 使用 π 表示圆周率
+- 使用 ^ 表示幂运算
+- 例如: f(x) = sin(2*x) * exp(-x)`;
+            } else if (mode === 'classic') {
+                helpText = `经典模式常用命令帮助:
+
+这是一个综合模式，支持代数、几何、函数等功能。
+
+基本图形:
+- Point[(x, y)] - 创建点
+- Segment[A, B] - 线段
+- Line[A, B] - 直线
+- Circle[圆心, 半径] - 圆
+- Polygon[点1, 点2, 点3, ...] - 多边形
+
+几何操作:
+- Altitude[点, 线段] - 高线
+- Midpoint[A, B] - 中点
+- Perpendicular[点, 直线] - 垂线
+- Parallel[点, 直线] - 平行线
+- Bisector[线1, 线2] - 角平分线
+
+测量:
+- Distance[A, B] - 距离
+- Angle[A, B, C] - 角度
+- Area[多边形] - 面积
+- Perimeter[多边形] - 周长
+
+样式:
+- SetColor[对象, "颜色"]
+- SetFilling[对象, 透明度]
+- SetLineThickness[对象, 宽度]`;
+            } else {
+                helpText = `2D 几何模式常用命令帮助:
+
+基本图形:
+- Point[(x, y)] 或 (x, y) - 创建点
+- Segment[A, B] - 创建线段
+- Line[A, B] - 创建直线
+- Ray[A, B] - 创建射线
+- Circle[(x, y), r] - 创建圆
+- Polygon[A, B, C, n] - 创建多边形
+- Triangle[A, B, C] - 创建三角形
+
+函数:
+- f(x) = expression - 定义函数
+- Derivative[f] - 导数
+- Integral[f, a, b] - 积分
+
+样式设置:
+- SetColor[obj, "color"] - 设置颜色
+- SetLineThickness[obj, n] - 设置线宽
+- SetFilling[obj, alpha] - 设置填充透明度
+
+操作:
+- Intersect[obj1, obj2] - 求交点
+- Midpoint[A, B] - 中点
+- Distance[A, B] - 距离
+
+提示:
+- 每行一个命令
+- 支持中文和英文命令
+- 注释使用 // 开头
+- 支持简写：A = (1,2) 可直接创建点
+- 颜色可用：red, blue, green, black, orange, purple 等`;
+            }
+
+            alert(helpText);
+        }
+
+        // 显示/隐藏设置面板
+        function toggleSettings() {
+            const panel = document.getElementById('settings-panel');
+            const overlay = document.getElementById('settings-overlay');
+
+            if (panel.style.right === '0px' || panel.classList.contains('open')) {
+                panel.style.right = '-400px';
+                panel.classList.remove('open');
+                overlay.classList.remove('active');
+            } else {
+                panel.style.right = '0px';
+                panel.classList.add('open');
+                overlay.classList.add('active');
+            }
+        }
+
+        // 应用设置
+        function applySettings() {
+            if (!isGeoGebraReady) {
+                alert('请等待 GeoGebra 加载完成');
+                return;
+            }
+
+            const showAxes = document.getElementById('setting-axes').checked;
+            const showGrid = document.getElementById('setting-grid').checked;
+            const showLabels = document.getElementById('setting-labels').checked;
+            const hidePlane = document.getElementById('setting-plane').checked;
+
+            try {
+                const mode = document.getElementById('app-mode-select').value;
+
+                // 3D 模式：隐藏基平面（坐标系）
+                if (mode === '3d' && hidePlane) {
+                    ggbApi.evalCommand('ShowAxes[false]');
+                    ggbApi.evalCommand('ShowGrid[false]');
+                } else {
+                    // 显示/隐藏坐标轴
+                    ggbApi.evalCommand(showAxes ? 'ShowAxes[true]' : 'ShowAxes[false]');
+
+                    // 显示/隐藏网格
+                    ggbApi.evalCommand(showGrid ? 'ShowGrid[true]' : 'ShowGrid[false]');
+                }
+
+                // 显示/隐藏标签
+                ggbApi.evalCommand(showLabels ? 'ShowLabels[true]' : 'ShowLabels[false]');
+
+                addLog('设置已应用', 'success');
+                toggleSettings();
+            } catch (e) {
+                alert('应用设置失败: ' + e.message);
+            }
+        }
+
+        // 重置视图
+        function resetView() {
+            if (!isGeoGebraReady) {
+                alert('请等待 GeoGebra 加载完成');
+                return;
+            }
+
+            try {
+                ggbApi.evalCommand('Reset[]');
+                addLog('视图已重置', 'info');
+            } catch (e) {
+                alert('重置视图失败: ' + e.message);
+            }
+        }
+
+        // 清除所有对象
+        function clearAll() {
+            if (!isGeoGebraReady) {
+                alert('请等待 GeoGebra 加载完成');
+                return;
+            }
+
+            if (confirm('确定要清除所有对象吗？')) {
+                try {
+                    ggbApi.evalCommand('Clear[]');
+                    addLog('已清除所有对象', 'info');
+                } catch (e) {
+                    alert('清除失败: ' + e.message);
+                }
+            }
+        }
+
+        // 页面加载完成后启动
+        window.addEventListener('load', function() {
+            console.log('页面加载完成');
+            console.log('开始加载 GeoGebra 库...');
+
+            // 同步 currentMode 变量到下拉框的默认值
+            const select = document.getElementById('app-mode-select');
+            if (select) {
+                currentMode = select.value;
+                console.log('初始化模式:', currentMode);
+
+                // 更新模式标识
+                const modeBadge = document.getElementById('mode-badge');
+                if (modeBadge) {
+                    modeBadge.textContent = getModeName(currentMode);
+                }
+            }
+
+            loadGeoGebraScript();
+        });
+
+        // 窗口大小调整 - 双向自适应优化版
+        let resizeTimeout = null;
+        let lastWidth = 0;
+        let lastHeight = 0;
+
+        window.addEventListener('resize', function() {
+            // 防抖处理：避免频繁调整
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(function() {
+                handleResize();
+            }, 100); // 100ms延迟，提升响应速度
+        });
+
+        // 自适应调整函数 - 支持窗口变大和变小
+        function handleResize() {
+            if (!ggbApplet || !isGeoGebraReady) {
+                console.log('GeoGebra未准备好，跳过调整');
+                return;
+            }
+
+            try {
+                const container = document.getElementById('ggb-element');
+                if (!container) return;
+
+                const parentElement = container.parentElement;
+                if (!parentElement) return;
+
+                // 获取当前容器尺寸
+                const newWidth = parentElement.offsetWidth;
+                const newHeight = parentElement.offsetHeight;
+
+                // 检查尺寸是否真的发生了变化（避免无意义的重复调整）
+                if (newWidth === lastWidth && newHeight === lastHeight) {
+                    console.log('尺寸未变化，跳过调整');
+                    return;
+                }
+
+                console.log(`窗口尺寸变化: ${lastWidth}x${lastHeight} → ${newWidth}x${newHeight}`);
+
+                // 记录新尺寸
+                lastWidth = newWidth;
+                lastHeight = newHeight;
+
+                // 调整GeoGebra组件尺寸
+                ggbApplet.setWidth(newWidth);
+                ggbApplet.setHeight(newHeight);
+
+                addLog(`画布尺寸已调整为: ${newWidth} × ${newHeight}`, 'info');
+
+                // 强制刷新布局
+                setTimeout(function() {
+                    if (ggbApi && ggbApi.recalculate) {
+                        ggbApi.recalculate();
+                    }
+                }, 50);
+
+            } catch (e) {
+                console.error('调整GeoGebra尺寸失败:', e);
+                addLog('调整画布尺寸失败: ' + e.message, 'error');
+            }
+        }
+
+        // 初始化时记录初始尺寸
+        function recordInitialSize() {
+            const container = document.getElementById('ggb-element');
+            if (container && container.parentElement) {
+                lastWidth = container.parentElement.offsetWidth;
+                lastHeight = container.parentElement.offsetHeight;
+                console.log('初始尺寸记录:', lastWidth, 'x', lastHeight);
+            }
+        }
+    </script>
+</body>
+</html>
