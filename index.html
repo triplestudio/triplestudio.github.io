@@ -67,11 +67,26 @@
             background: rgba(88, 166, 255, 0.1);
         }
 
-        .links-grid {
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-        }
+.links-grid {
+  display: grid;
+  /* 默认：手机端显示 2 列 */
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+/* 当屏幕宽度大于 600px 时，显示 3 列 */
+@media (min-width: 600px) {
+  .links-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* 当屏幕宽度大于 900px 时，显示 4 列（封顶） */
+@media (min-width: 900px) {
+  .links-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
 
         .link-card {
             padding: 1.25rem 1.5rem;
@@ -153,12 +168,21 @@
                     <div class="link-desc">GeoGebra 通过脚本进行几何图形绘制</div>
                 </div>
             </a>
+            <a href="geogebra_commands.pdf" class="link-card">
+                <span class="link-icon">📝</span>
+                <div class="link-content">
+                    <div class="link-title">geogebra_commands.pdf</div>
+                    <div class="link-desc">geogebra_commands.pdf</div>
+                </div>
+            </a>
+            <a href="commandsIndexTree.json" class="link-card">
+                <span class="link-icon">📝</span>
+                <div class="link-content">
+                    <div class="link-title">commandsIndexTree.json</div>
+                    <div class="link-desc">geogebra commands index tree.json</div>
+                </div>
+            </a>
         </div>
-    </div>
-
-    <div style="text-align:center">
-        <a href="geogebra_commands.pdf">geogebra_commands.pdf</a>
-        <a href="commandsIndexTree.json">commandsIndexTree.json</a>
     </div>
 
     <script>
